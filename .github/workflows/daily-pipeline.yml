@@ -2,10 +2,11 @@ name: Daily Deal Radar Pipeline
 
 on:
   schedule:
-    # 每天北京时间 08:00 (UTC 00:00)
-    - cron: '0 0 * * *'
+    - cron: '0 0 * * *'   # 每天北京时间 08:00
   workflow_dispatch:
-    # 支持手动触发，方便测试
+
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
 
 jobs:
   update-deals:
@@ -21,9 +22,8 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: pipeline/package-lock.json
 
+      # ── 1. 跑数据管道 ──────────────────────────────────────
       - name: Install pipeline dependencies
         run: npm install
         working-directory: pipeline
@@ -34,12 +34,16 @@ jobs:
         env:
           DEAL_DATA_DIR: ${{ github.workspace }}/data
 
+      # ── 2. 检查数据是否有变化 ──────────────────────────────
       - name: Check for changes
         id: changes
         run: |
-          git diff --quiet data/homepage.json && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+          git diff --quiet data/homepage.json \
+            && echo "changed=false" >> $GITHUB_OUTPUT \
+            || echo "changed=true" >> $GITHUB_OUTPUT
 
-      - name: Commit and push updated deals
+      # ── 3. 提交新数据 ──────────────────────────────────────
+      - name: Commit updated deals
         if: steps.changes.outputs.changed == 'true'
         run: |
           git config user.name  "DealRadar Bot"
@@ -48,9 +52,19 @@ jobs:
           git commit -m "chore(data): update deals $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
 
+      # ── 4. 构建 + 部署到 Netlify ──────────────────────────
+      - name: Install web dependencies
+        if: steps.changes.outputs.changed == 'true'
+        run: npm install
+
+      - name: Build Next.js
+        if: steps.changes.outputs.changed == 'true'
+        run: npm run build
+
       - name: Deploy to Netlify
         if: steps.changes.outputs.changed == 'true'
         run: |
           npm install -g netlify-cli
-          npm run build
-          netlify deploy --dir=.next --prod --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }}
+          netlify deploy --dir=.next --prod \
+            --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} \
+            --site=${{ secrets.NETLIFY_SITE_ID }}
