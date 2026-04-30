@@ -11,7 +11,7 @@ jobs:
   update-deals:
     runs-on: ubuntu-latest
     permissions:
-      contents: write   # 允许 push 回 homepage.json
+      contents: write
 
     steps:
       - name: Checkout repo
@@ -45,8 +45,12 @@ jobs:
           git config user.name  "DealRadar Bot"
           git config user.email "bot@dealradar.app"
           git add data/homepage.json
-          # 顺便保留最近7天的存档，删掉更早的
-          git add data/homepage-*.json 2>/dev/null || true
-          find data -name "homepage-*.json" -mtime +7 -exec git rm {} \; 2>/dev/null || true
           git commit -m "chore(data): update deals $(date -u '+%Y-%m-%d %H:%M UTC')"
           git push
+
+      - name: Deploy to Netlify
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          npm install -g netlify-cli
+          npm run build
+          netlify deploy --dir=.next --prod --auth=${{ secrets.NETLIFY_AUTH_TOKEN }} --site=${{ secrets.NETLIFY_SITE_ID }}
