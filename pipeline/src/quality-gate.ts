@@ -288,6 +288,15 @@ export function runQualityGate(deal: RawDeal): GateResult {
     errors.push({ code: 'QG012', reason: 'CONFIDENCE_TOO_LOW', field: 'confidence_score', value: deal.confidence_score });
   }
 
+  // QG016: Both prices known but current >= original → not actually a deal
+  if (
+    deal.price_current !== undefined && deal.price_current > 0 &&
+    deal.price_original !== undefined && deal.price_original > 0 &&
+    deal.price_current >= deal.price_original
+  ) {
+    errors.push({ code: 'QG016', reason: 'NO_DISCOUNT_PRICE_NOT_REDUCED', field: 'price_current', value: deal.price_current });
+  }
+
   // P1 NEW RULES:
 
   // QG013: Reddit thread without merchant URL → discovery only, cannot rank directly
@@ -355,7 +364,9 @@ export function normalizeTitle(title: string): string {
   let t = title.trim();
   t = t.replace(/\[AMAZON:[A-Z0-9]{10}\]/gi, '').trim();
   t = t.replace(/\s*[-–—]\s*\$[\d,]+\.?\d*/g, '');
-  t = t.replace(/\s*(deal|折扣|优惠|promo|coupon).*$/i, '');
+  // Only strip promo noise at end — don't strip "deal" from mid-sentence article titles
+  t = t.replace(/\s+[-–—]\s*(折扣|优惠|promo|coupon)\s*\w*\s*$/i, '');
+  t = t.replace(/\s+(折扣|优惠|coupon\s*code)\s*\w*\s*$/i, '');
   t = t.replace(/\s+/g, ' ').trim();
   return t || 'Unknown Product';
 }

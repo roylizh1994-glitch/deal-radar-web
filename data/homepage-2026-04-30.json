@@ -1,12 +1,28 @@
 {
-  "generated_at": "2026-04-30T10:33:27.213Z",
+  "generated_at": "2026-04-30T11:41:25.256Z",
   "date": "2026-04-30",
   "mode": "FULL_PUBLISH",
   "banner": null,
   "items": [
     {
       "rank": 1,
-      "id": "sd_1777545207200_29",
+      "id": "sd_1777549285249_26",
+      "title": "Deep deal knocks Amazon's Fire TV Stick 4K down to just $16 today with this code (Reg. $50)",
+      "brand": "Deep",
+      "model": "deal knocks Amazon's Fire TV",
+      "category": "TV",
+      "source": "9to5toys.com",
+      "price_current": 16,
+      "price_original": 50,
+      "discount_pct": 68,
+      "score": 1,
+      "confidence_score": 0.48,
+      "deal_url": "https://9to5toys.com/2026/04/30/deal-knocks-amazon-fire-tv-stick-4k/",
+      "verified_at": "2026-04-30T11:41:25.256Z"
+    },
+    {
+      "rank": 2,
+      "id": "sd_1777549285249_32",
       "title": "Instead of paying $100/year for Microsoft 365, get Microsoft Office for life at $30",
       "brand": "Microsoft",
       "model": "Instead of paying $100/year for",
@@ -17,11 +33,12 @@
       "discount_pct": 70,
       "score": 1,
       "confidence_score": 0.48,
-      "deal_url": "https://9to5toys.com/2026/04/29/paying-per-year-365-get-microsoft-office-deal/"
+      "deal_url": "https://9to5toys.com/2026/04/29/paying-per-year-365-get-microsoft-office-deal/",
+      "verified_at": "2026-04-30T11:41:25.256Z"
     },
     {
-      "rank": 2,
-      "id": "rd_1777545207202_76",
+      "rank": 3,
+      "id": "rd_1777549285250_75",
       "title": "INNOCN 27\" Gaming Monitor 2K QHD 2560 x 1440P 320Hz 1ms IPS PC Computer Display, HDMI 2.1, DP 1.4, HDR 400, Eyes Care, Height/Pivot Adjustable, VESA Mountable, 27G2T ($279.99)",
       "brand": "INNOCN",
       "model": "27\" Gaming Monitor 2K QHD",
@@ -32,11 +49,12 @@
       "discount_pct": 61,
       "score": 1,
       "confidence_score": 0.48,
-      "deal_url": "https://www.amazon.com/dp/B0FPFTPPYN"
+      "deal_url": "https://www.amazon.com/dp/B0FPFTPPYN",
+      "verified_at": "2026-04-30T11:41:25.256Z"
     },
     {
-      "rank": 3,
-      "id": "rd_1777545207202_79",
+      "rank": 4,
+      "id": "rd_1777549285250_78",
       "title": "Acer XV275K P5 4K 160hz (DFR 1080p 320hz) 1152-zone mini-LED ($599.99)",
       "brand": "Acer",
       "model": "XV275K P5 4K 160hz (DFR",
@@ -47,12 +65,45 @@
       "discount_pct": 62,
       "score": 1,
       "confidence_score": 0.48,
-      "deal_url": "https://www.microcenter.com/product/706839/acer-nitro-xv275k-p5biipruzx-27-4k-uhd-(3840-x-2160)-160hz-gaming-monitor"
+      "deal_url": "https://www.microcenter.com/product/706839/acer-nitro-xv275k-p5biipruzx-27-4k-uhd-(3840-x-2160)-160hz-gaming-monitor",
+      "verified_at": "2026-04-30T11:41:25.256Z"
     },
     {
-      "rank": 4,
-      "id": "sd_1777545207200_28",
-      "title": "Score Mom (or yourself) some AirPods 4 from $99 this week + AirPods Pro 3",
+      "rank": 5,
+      "id": "sd_1777549285249_28",
+      "title": "Titanium Apple Watch Series 11 hits Amazon all-time low at up to $160 off today, plus deals from $299",
+      "brand": "Apple",
+      "model": "Titanium Watch Series 11 hits",
+      "category": "Wearable",
+      "source": "9to5toys.com",
+      "price_current": 299,
+      "price_original": 299,
+      "discount_pct": 0,
+      "score": 0.55,
+      "confidence_score": 0.48,
+      "deal_url": "https://9to5toys.com/2026/04/30/titanium-apple-watch-series-11-best-price-2/",
+      "verified_at": "2026-04-30T11:41:25.256Z"
+    },
+    {
+      "rank": 6,
+      "id": "sd_1777549285250_55",
+      "title": "Just $35 today gets you this display-equipped SSD enclosure with power-loss protection (All-time low)",
+      "brand": "Just",
+      "model": "$35 today gets you this",
+      "category": "Monitor",
+      "source": "9to5toys.com",
+      "price_current": 35,
+      "price_original": 35,
+      "discount_pct": 0,
+      "score": 0.55,
+      "confidence_score": 0.48,
+      "deal_url": "https://9to5toys.com/2026/04/29/display-equipped-ssd-enclosure-with-power-loss-protection-all-time-low/",
+      "verified_at": "2026-04-30T11:41:25.256Z"
+    },
+    {
+      "rank": 7,
+      "id": "sd_1777549285249_31",
+      "title": "Score Mom (or yourself) some AirPods 4 from $99 this week + AirPods Pro 3 deal",
       "brand": "Score",
       "model": "Mom (or yourself) some AirPods",
       "category": "Audio",
@@ -60,13 +111,14 @@
       "price_current": 99,
       "price_original": 99,
       "discount_pct": 0,
-      "score": 0.7,
+      "score": 0.4,
       "confidence_score": 0.48,
-      "deal_url": "https://9to5toys.com/2026/04/30/mom-airpods-best-gift/"
+      "deal_url": "https://9to5toys.com/2026/04/30/mom-airpods-best-gift/",
+      "verified_at": "2026-04-30T11:41:25.256Z"
     },
     {
-      "rank": 5,
-      "id": "sd_1777545207200_15",
+      "rank": 8,
+      "id": "sd_1777549285249_19",
       "title": "Refurb: HP Elitebook 845 G8 Laptop: Ryzen 5 Pro 5650U, 14\", 32GB RAM, 256GB SSD $330 + Free S&H",
       "brand": "HP",
       "model": "Refurb: Elitebook 845 G8 Laptop:",
@@ -75,13 +127,14 @@
       "price_current": 330,
       "price_original": 330,
       "discount_pct": 0,
-      "score": 0.7,
+      "score": 0.4,
       "confidence_score": 0.48,
-      "deal_url": "https://slickdeals.net/f/19470423-hp-elitebook-845-g8-14-fhd-laptop-amd-ryzen-5-pro-5650u-32gb-ddr4-3200-sdram-256gb-ssd-refurbished-330-fs?utm_source=rss&amp;utm_content=fp&amp;utm_medium=RSS2"
+      "deal_url": "https://slickdeals.net/f/19470423-hp-elitebook-845-g8-14-fhd-laptop-amd-ryzen-5-pro-5650u-32gb-ddr4-3200-sdram-256gb-ssd-refurbished-330-fs?utm_source=rss&amp;utm_content=fp&amp;utm_medium=RSS2",
+      "verified_at": "2026-04-30T11:41:25.256Z"
     },
     {
-      "rank": 6,
-      "id": "sd_1777545207200_21",
+      "rank": 9,
+      "id": "sd_1777549285249_25",
       "title": "Micro Center: Intel Ultra 7 270K + Gigabyte Z890 Eagle Wi-Fi7 MB + 32GB DDR5 6400 $600 + Free Pickup",
       "brand": "Intel",
       "model": "Micro Center: Ultra 7 270K",
@@ -90,13 +143,14 @@
       "price_current": 600,
       "price_original": 600,
       "discount_pct": 0,
-      "score": 0.7,
+      "score": 0.4,
       "confidence_score": 0.48,
-      "deal_url": "https://slickdeals.net/f/19473930-microcenter-ultra-7-270k-plus-gigabyte-z890-eagle-wifi7-1851-crucial-pro-32gb-ddr5-6400-kit-computer-build-bundle-600?utm_source=rss&amp;utm_content=fp&amp;utm_medium=RSS2"
+      "deal_url": "https://slickdeals.net/f/19473930-microcenter-ultra-7-270k-plus-gigabyte-z890-eagle-wifi7-1851-crucial-pro-32gb-ddr5-6400-kit-computer-build-bundle-600?utm_source=rss&amp;utm_content=fp&amp;utm_medium=RSS2",
+      "verified_at": "2026-04-30T11:41:25.256Z"
     },
     {
-      "rank": 7,
-      "id": "rd_1777545207202_67",
+      "rank": 10,
+      "id": "rd_1777549285250_67",
       "title": "GIGABYTE B650 Gaming X AX AMD AM5 ATX Motherboard Like New @Amazon",
       "brand": "AMD",
       "model": "GIGABYTE B650 Gaming X AX",
@@ -105,54 +159,10 @@
       "price_current": 67.63,
       "price_original": 67.63,
       "discount_pct": 0,
-      "score": 0.7,
+      "score": 0.4,
       "confidence_score": 0.48,
-      "deal_url": "https://www.amazon.com/dp/B0BYBHW4SH"
-    },
-    {
-      "rank": 8,
-      "id": "rd_1777545207202_68",
-      "title": "Amazon.com: KAIGERR 16GB DDR4 512GB SSD Laptop Ιntel 12th Quad-Core Processor (Up to 3.4GHz), 1920P FHD Display (78% off with",
-      "brand": "Amazon.com:",
-      "model": "KAIGERR 16GB DDR4 512GB SSD",
-      "category": "Laptop",
-      "source": "amazon.com",
-      "price_current": 285.99,
-      "price_original": 285.99,
-      "discount_pct": 0,
-      "score": 0.7,
-      "confidence_score": 0.48,
-      "deal_url": "https://www.amazon.com/dp/B0GTM48RYJ"
-    },
-    {
-      "rank": 9,
-      "id": "rd_1777545207202_69",
-      "title": "Thermaltake LCGS Versa u2660TS Gaming PC 265k, 32gb ddr5, 2tb nvme, rtx 5060 ti 8gb $1200",
-      "brand": "Thermaltake",
-      "model": "LCGS Versa u2660TS Gaming PC",
-      "category": "GPU",
-      "source": "sellout.woot.com",
-      "price_current": 1200,
-      "price_original": 1200,
-      "discount_pct": 0,
-      "score": 0.7,
-      "confidence_score": 0.48,
-      "deal_url": "https://sellout.woot.com/offers/thermaltake-lcgs-versa-u2660ts-gaming-pc-1?ref=w_cnt_wp_0_12"
-    },
-    {
-      "rank": 10,
-      "id": "rd_1777545207202_70",
-      "title": "Intel Core Ultra 7 270K Plus, Gigabyte Z890 Eagle WiFi7, Crucial Pro 32GB CL 32 6400 Kit - In Store Only",
-      "brand": "Crucial",
-      "model": "Intel Core Ultra 7 270K",
-      "category": "CPU",
-      "source": "microcenter.com",
-      "price_current": 599.99,
-      "price_original": 599.99,
-      "discount_pct": 0,
-      "score": 0.7,
-      "confidence_score": 0.48,
-      "deal_url": "https://www.microcenter.com/product/5007396/intel-core-ultra-7-270k-plus,-gigabyte-z890-eagle-wifi7-1851,-crucial-pro-32gb-ddr5-6400-kit,-computer-build-bundle"
+      "deal_url": "https://www.amazon.com/dp/B0BYBHW4SH",
+      "verified_at": "2026-04-30T11:41:25.256Z"
     }
   ]
 }

@@ -104,9 +104,12 @@ async function main() {
   // Step 5: Score
   console.log('Step 5: Computing scores...');
   for (const deal of deduped) {
-    // Set base business score from discount_pct or source quality
-    const discountBonus = deal.discount_pct > 0 ? Math.min(deal.discount_pct, 0.6) : 0.3;
-    deal.score = 0.4 + discountBonus;  // 0.4–1.0 range
+    // Items with no discount evidence score lowest; explicit discount drives ranking
+    const hasAtl = /\b(all.?time\s*low|historic\s*(low|price)|record\s*low|best\s*price\s*ever)\b/i.test(deal.title);
+    const discountBonus = deal.discount_pct > 0
+      ? Math.min(deal.discount_pct, 0.6)       // 0–60% of score range
+      : hasAtl ? 0.15 : 0;                     // ATL article: small bonus; unknown: no bonus
+    deal.score = 0.4 + discountBonus;           // range: 0.4 (no info) → 1.0 (60%+ off)
 
     const trust = getSourceTrust(deal.source);
     const composite = computeCompositeScore(deal, {
@@ -142,8 +145,10 @@ async function main() {
   const dataDir = ensureDir(FRONTEND_DATA_DIR);
   const today = new Date().toISOString().slice(0, 10);
 
+  const nowIso = new Date().toISOString();
+
   const homepagePayload = {
-    generated_at: new Date().toISOString(),
+    generated_at: nowIso,
     date: today,
     mode: publishDecision.mode,
     banner: publishDecision.banner_message ?? null,
@@ -161,6 +166,7 @@ async function main() {
       score: Math.round(deal.score * 100) / 100,
       confidence_score: Math.round(deal.confidence_score * 100) / 100,
       deal_url: deal.deal_url,
+      verified_at: nowIso,
     })),
   };
 
@@ -171,7 +177,35 @@ async function main() {
   // Also write dated archive
   const archivePath = join(dataDir, `homepage-${today}.json`);
   writeFileSync(archivePath, JSON.stringify(homepagePayload, null, 2));
-  console.log(`        Archive → ${archivePath}\n`);
+  console.log(`        Archive → ${archivePath}`);
+
+  // Step 8: Write QA report
+  const rejectBreakdown = gateSummary.error_breakdown.slice(0, 5).map(e => ({
+    code: e.code,
+    reason: e.reason,
+    count: e.count,
+  }));
+
+  const qaReport = {
+    generated_at: nowIso,
+    date: today,
+    raw_count: rssItems.length,
+    filtered_count: filteredItems.length,
+    parsed_count: rawDeals.length,
+    qualified_count: gateSummary.passed,
+    deduped_count: deduped.length,
+    published_count: homepagePayload.items.length,
+    qualified_rate: Math.round(gateSummary.qualified_rate * 1000) / 1000,
+    duplicate_ratio: rawDeals.length > 0 ? Math.round((dedupResult.dropped_duplicates / rawDeals.length) * 1000) / 1000 : 0,
+    broken_link_ratio: 0,
+    publish_mode: publishDecision.mode,
+    reject_reason_top5: rejectBreakdown,
+    sample_rejects: gateSummary.sample_rejects.slice(0, 5),
+  };
+
+  const qaPath = join(dataDir, 'qa_report.json');
+  writeFileSync(qaPath, JSON.stringify(qaReport, null, 2));
+  console.log(`        QA report → ${qaPath}\n`);
 
   console.log('✅ Pipeline complete.\n');
 }

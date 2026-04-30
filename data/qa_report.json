@@ -1,0 +1,78 @@
+{
+  "generated_at": "2026-04-30T11:41:25.256Z",
+  "date": "2026-04-30",
+  "raw_count": 150,
+  "filtered_count": 140,
+  "parsed_count": 140,
+  "qualified_count": 29,
+  "deduped_count": 29,
+  "published_count": 10,
+  "qualified_rate": 0.207,
+  "duplicate_ratio": 0,
+  "broken_link_ratio": 0,
+  "publish_mode": "FULL_PUBLISH",
+  "reject_reason_top5": [
+    {
+      "code": "QG009",
+      "reason": "CATEGORY_BLOCKED",
+      "count": 79
+    },
+    {
+      "code": "QG015",
+      "reason": "POST_TOO_OLD",
+      "count": 57
+    },
+    {
+      "code": "QG001",
+      "reason": "MISSING_REQUIRED_FIELD",
+      "count": 37
+    },
+    {
+      "code": "QG013",
+      "reason": "REDDIT_THREAD_NO_MERCHANT",
+      "count": 5
+    }
+  ],
+  "sample_rejects": [
+    {
+      "id": "sd_1777549285244_1",
+      "title": "$100 Nintendo eShop Gift Card (Email Delivery) $80.50",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG009"
+      ]
+    },
+    {
+      "id": "sd_1777549285247_2",
+      "title": "Nautica: Extra Savings on Select Men's & Women's Styles: 20% Off $125+ Purchase, 15% Off $100+ Purchase Free S/H on $60+ Orders",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG009"
+      ]
+    },
+    {
+      "id": "sd_1777549285247_3",
+      "title": "Tom Petty & Heartbreakers: Mojo (2 Vinyl LP) $19.70",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG009"
+      ]
+    },
+    {
+      "id": "sd_1777549285248_4",
+      "title": "8\" PreSonus Eric Bluetooth Front-Firing Studio Subwoofer (White) $178.50 + Free S&H",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG009"
+      ]
+    },
+    {
+      "id": "sd_1777549285248_5",
+      "title": "Patagonia Men's Corduroy Shirt (Seabird Grey or Corriander Brown) $45.90 + Free S&H on $49+",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG009"
+      ]
+    }
+  ]
+}

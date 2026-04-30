@@ -12,6 +12,7 @@ export interface DealItem {
   score: number;
   confidence_score: number;
   deal_url: string;
+  verified_at?: string;  // ISO timestamp when pipeline last ran
 }
 
 export type PublishMode = 'FULL_PUBLISH' | 'PARTIAL_PUBLISH' | 'HARD_FAIL';
