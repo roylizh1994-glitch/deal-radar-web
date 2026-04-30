@@ -1,0 +1,52 @@
+name: Daily Deal Radar Pipeline
+
+on:
+  schedule:
+    # 每天北京时间 08:00 (UTC 00:00)
+    - cron: '0 0 * * *'
+  workflow_dispatch:
+    # 支持手动触发，方便测试
+
+jobs:
+  update-deals:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # 允许 push 回 homepage.json
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: pipeline/package-lock.json
+
+      - name: Install pipeline dependencies
+        run: npm install
+        working-directory: pipeline
+
+      - name: Run RSS pipeline
+        run: npx tsx src/run-rss-pipeline.ts
+        working-directory: pipeline
+        env:
+          DEAL_DATA_DIR: ${{ github.workspace }}/data
+
+      - name: Check for changes
+        id: changes
+        run: |
+          git diff --quiet data/homepage.json && echo "changed=false" >> $GITHUB_OUTPUT || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push updated deals
+        if: steps.changes.outputs.changed == 'true'
+        run: |
+          git config user.name  "DealRadar Bot"
+          git config user.email "bot@dealradar.app"
+          git add data/homepage.json
+          # 顺便保留最近7天的存档，删掉更早的
+          git add data/homepage-*.json 2>/dev/null || true
+          find data -name "homepage-*.json" -mtime +7 -exec git rm {} \; 2>/dev/null || true
+          git commit -m "chore(data): update deals $(date -u '+%Y-%m-%d %H:%M UTC')"
+          git push

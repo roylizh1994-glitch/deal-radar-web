@@ -1,0 +1,13 @@
+{
+  "name": "deal-radar-pipeline",
+  "version": "1.0.0",
+  "type": "commonjs",
+  "scripts": {
+    "fetch": "npx tsx src/run-rss-pipeline.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.0"
+  }
+}
