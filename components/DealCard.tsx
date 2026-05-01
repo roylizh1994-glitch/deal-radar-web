@@ -33,7 +33,8 @@ function formatVerifiedTime(iso?: string): string | null {
   return new Date(iso).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function DealCard({ deal }: { deal: DealItem }) {
+export default function DealCard({ deal, displayRank }: { deal: DealItem; displayRank?: number }) {
+  const rank = displayRank ?? deal.rank;
   const catColor = CATEGORY_COLORS[deal.category] ?? CATEGORY_COLORS.Other;
   const hasDiscount = deal.discount_pct > 0;
   const savings = deal.price_original - deal.price_current;
@@ -50,8 +51,8 @@ export default function DealCard({ deal }: { deal: DealItem }) {
 
         {/* Rank */}
         <div className="flex-shrink-0 w-7 pt-0.5 text-center">
-          <span className={`text-sm font-bold ${deal.rank <= 3 ? 'text-orange-500' : 'text-gray-300'}`}>
-            #{deal.rank}
+          <span className={`text-sm font-bold ${rank <= 3 ? 'text-orange-500' : 'text-gray-300'}`}>
+            #{rank}
           </span>
         </div>
 

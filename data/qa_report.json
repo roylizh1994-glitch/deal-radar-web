@@ -1,13 +1,13 @@
 {
-  "generated_at": "2026-04-30T11:41:25.256Z",
-  "date": "2026-04-30",
+  "generated_at": "2026-05-01T07:39:39.437Z",
+  "date": "2026-05-01",
   "raw_count": 150,
-  "filtered_count": 140,
-  "parsed_count": 140,
-  "qualified_count": 29,
-  "deduped_count": 29,
+  "filtered_count": 136,
+  "parsed_count": 136,
+  "qualified_count": 28,
+  "deduped_count": 28,
   "published_count": 10,
-  "qualified_rate": 0.207,
+  "qualified_rate": 0.206,
   "duplicate_ratio": 0,
   "broken_link_ratio": 0,
   "publish_mode": "FULL_PUBLISH",
@@ -15,12 +15,12 @@
     {
       "code": "QG009",
       "reason": "CATEGORY_BLOCKED",
-      "count": 79
+      "count": 75
     },
     {
       "code": "QG015",
       "reason": "POST_TOO_OLD",
-      "count": 57
+      "count": 56
     },
     {
       "code": "QG001",
@@ -35,40 +35,41 @@
   ],
   "sample_rejects": [
     {
-      "id": "sd_1777549285244_1",
-      "title": "$100 Nintendo eShop Gift Card (Email Delivery) $80.50",
+      "id": "sd_1777621179424_3",
+      "title": "Grubhub+ Members: Gold Days Weekly Offers w/ Purchase thru May 31 See Thread for Details + 6-Mon Grubhub+ $0.99/Mon Offer",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG001",
+        "QG009"
+      ]
+    },
+    {
+      "id": "sd_1777621179425_5",
+      "title": "Eco-Worthy 5000W 48V Hybrid Solar Inverter $367.70 + Free S&H",
       "source": "slickdeals.net",
       "error_codes": [
         "QG009"
       ]
     },
     {
-      "id": "sd_1777549285247_2",
-      "title": "Nautica: Extra Savings on Select Men's & Women's Styles: 20% Off $125+ Purchase, 15% Off $100+ Purchase Free S/H on $60+ Orders",
+      "id": "sd_1777621179425_6",
+      "title": "Vynix 3D Blackout Sleep Mask for Side Sleepers (Black) $4.60",
       "source": "slickdeals.net",
       "error_codes": [
         "QG009"
       ]
     },
     {
-      "id": "sd_1777549285247_3",
-      "title": "Tom Petty & Heartbreakers: Mojo (2 Vinyl LP) $19.70",
+      "id": "sd_1777621179425_7",
+      "title": "1.69-Oz GANGNAM GLOW Day SPF 50 Tinted Sunscreen $12 w/ S&S",
       "source": "slickdeals.net",
       "error_codes": [
         "QG009"
       ]
     },
     {
-      "id": "sd_1777549285248_4",
-      "title": "8\" PreSonus Eric Bluetooth Front-Firing Studio Subwoofer (White) $178.50 + Free S&H",
-      "source": "slickdeals.net",
-      "error_codes": [
-        "QG009"
-      ]
-    },
-    {
-      "id": "sd_1777549285248_5",
-      "title": "Patagonia Men's Corduroy Shirt (Seabird Grey or Corriander Brown) $45.90 + Free S&H on $49+",
+      "id": "sd_1777621179425_9",
+      "title": "Anker 2-in-1 USB-C to 2x USB-C 140W Max Fast Charging Cable: 6-ft $18, 4-ft $15",
       "source": "slickdeals.net",
       "error_codes": [
         "QG009"

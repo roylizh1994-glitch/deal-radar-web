@@ -104,12 +104,25 @@ async function main() {
   // Step 5: Score
   console.log('Step 5: Computing scores...');
   for (const deal of deduped) {
-    // Items with no discount evidence score lowest; explicit discount drives ranking
+    // business_score = discount_weight(40%) + savings_weight(20%) + source_trust(20%) + base(20%)
+    //
+    // Discount component (0–0.40): proportional to discount_pct, capped at 60%
     const hasAtl = /\b(all.?time\s*low|historic\s*(low|price)|record\s*low|best\s*price\s*ever)\b/i.test(deal.title);
-    const discountBonus = deal.discount_pct > 0
-      ? Math.min(deal.discount_pct, 0.6)       // 0–60% of score range
-      : hasAtl ? 0.15 : 0;                     // ATL article: small bonus; unknown: no bonus
-    deal.score = 0.4 + discountBonus;           // range: 0.4 (no info) → 1.0 (60%+ off)
+    const discountComponent = deal.discount_pct > 0
+      ? Math.min(deal.discount_pct, 0.6) * (0.40 / 0.60)   // normalise to 0–0.40
+      : hasAtl ? 0.10 : 0;
+    //
+    // Absolute savings component (0–0.20): $0→$0, $100+→0.20 (log-scaled)
+    const savingsAbs = Math.max(0, deal.price_original - deal.price_current);
+    const savingsComponent = savingsAbs > 0
+      ? Math.min(Math.log10(savingsAbs + 1) / Math.log10(101), 1) * 0.20
+      : 0;
+    //
+    // Source trust component (0–0.20)
+    const sourceTrustComponent = getSourceTrust(deal.source) * 0.20;
+    //
+    deal.score = 0.20 + discountComponent + savingsComponent + sourceTrustComponent;
+    // range: ~0.20 (no info, low-trust) → ~1.0 (60%+ off, $100+ savings, top retailer)
 
     const trust = getSourceTrust(deal.source);
     const composite = computeCompositeScore(deal, {
