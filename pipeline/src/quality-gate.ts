@@ -34,6 +34,9 @@ export interface RawDeal {
   has_price?: boolean;
   has_add_to_cart?: boolean;  // not yet available at scrape time
   domain_matches_whitelist?: boolean;
+  // source tracking
+  feed_name?: string;   // connector name (e.g. "Slickdeals Frontpage")
+  source_id?: string;   // connector id from source registry
 }
 
 // Source tier freshness baseline (P1: shorter half-life = more aggressive decay)
@@ -125,6 +128,9 @@ export interface NormalizedDeal {
   final_url?: string;
   link_verified_at?: string;
   published_at?: string;
+  // connector tracking
+  feed_name?: string;
+  source_id?: string;
 }
 
 const ALLOWED_DOMAINS = new Set([
@@ -187,6 +193,8 @@ const ALLOWED_DOMAINS = new Set([
   '9to5mac.com', 'www.9to5mac.com',
   '9to5google.com', 'www.9to5google.com',
   'dealnews.com', 'www.dealnews.com',
+  // Deal aggregator link-through domains
+  'bensbargains.net', 'www.bensbargains.net',
   // US retailers extras
   'costco.com', 'www.costco.com',
   'rakuten.com', 'www.rakuten.com',
@@ -353,6 +361,8 @@ export function runQualityGate(deal: RawDeal): GateResult {
     final_url: deal.final_url,
     published_at: deal.published_at,
     link_verified_at: deal.link_verified ? new Date().toISOString() : undefined,
+    feed_name: deal.feed_name,
+    source_id: deal.source_id,
   };
 
   return { id: deal.id, passed: true, errors: [], normalized };

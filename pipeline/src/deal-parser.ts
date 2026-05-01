@@ -295,6 +295,8 @@ export function parseRssItem(item: RssItem): RawDeal | null {
     is_external_link,
     has_price: price_current > 0,
     domain_matches_whitelist: isMerchant(deal_url),
+    feed_name: item.feedName,
+    source_id: item.sourceId,
   };
 }
 
