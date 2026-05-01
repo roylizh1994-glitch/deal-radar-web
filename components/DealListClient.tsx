@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import DealCard from './DealCard';
-import type { DealItem, HomepageData } from '@/lib/types';
+import type { DealItem } from '@/lib/types';
 
 // ── Category hierarchy ────────────────────────────────────────────────────────
 
@@ -24,7 +24,7 @@ for (const [group, cats] of Object.entries(CATEGORY_GROUPS)) {
 
 const GROUP_ORDER = Object.keys(CATEGORY_GROUPS);
 
-// ── Sort options ──────────────────────────────────────────────────────────────
+// ── Sort ──────────────────────────────────────────────────────────────────────
 
 type SortKey = 'score' | 'discount' | 'savings' | 'newest';
 
@@ -38,94 +38,163 @@ const SORT_OPTIONS: { key: SortKey; label: string }[] = [
 function sortItems(items: DealItem[], sort: SortKey): DealItem[] {
   const copy = [...items];
   switch (sort) {
-    case 'discount':
-      return copy.sort((a, b) => b.discount_pct - a.discount_pct);
-    case 'savings':
-      return copy.sort((a, b) =>
-        (b.price_original - b.price_current) - (a.price_original - a.price_current)
-      );
-    case 'newest':
-      return copy.sort((a, b) =>
-        (b.verified_at ?? '').localeCompare(a.verified_at ?? '')
-      );
-    default: // score
-      return copy.sort((a, b) => b.score - a.score);
+    case 'discount': return copy.sort((a, b) => b.discount_pct - a.discount_pct);
+    case 'savings':  return copy.sort((a, b) =>
+      (b.price_original - b.price_current) - (a.price_original - a.price_current));
+    case 'newest':   return copy.sort((a, b) =>
+      (b.verified_at ?? '').localeCompare(a.verified_at ?? ''));
+    default:         return copy.sort((a, b) => b.score - a.score);
   }
 }
+
+// ── View mode ─────────────────────────────────────────────────────────────────
+
+type ViewMode = 'deals'    // 好价榜: discount_pct > 0
+              | 'watching'; // 关注价: discount_pct === 0
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
-  /** Global top-10 for the default "全部" view */
+  /** Global top-10 for the default "全部" view (pre-ranked by pipeline) */
   items: DealItem[];
-  /** Per-category pools (each already up to 10 items, sorted by score) */
+  /** Per-category pools — each sorted by score, max 10 */
   categories?: Record<string, DealItem[]>;
 }
 
 const MAX_CAT_VIEW = 10;
 
 export default function DealListClient({ items, categories = {} }: Props) {
+  const [viewMode,      setViewMode]      = useState<ViewMode>('deals');
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedCat,   setSelectedCat]   = useState<string | null>(null);
   const [sortKey,       setSortKey]       = useState<SortKey>('score');
-  const [realOnly,      setRealOnly]      = useState(false);
 
-  // All items across all category pools (for counts / toggles)
-  const allCatItems = useMemo(() =>
-    Object.values(categories).flat(), [categories]
-  );
-  // Fall back to global top-10 if no per-category data
-  const poolItems = allCatItems.length > 0 ? allCatItems : items;
+  // Flat pool from all category buckets (richer than global top-10)
+  const allCatItems = useMemo(() => Object.values(categories).flat(), [categories]);
+  const poolItems   = allCatItems.length > 0 ? allCatItems : items;
 
-  const realCount    = poolItems.filter(d => d.discount_pct > 0).length;
-  const activeGroups = GROUP_ORDER.filter(g =>
-    poolItems.some(d => CAT_TO_GROUP[d.category] === g)
-  );
-  const subCats = selectedGroup
-    ? (CATEGORY_GROUPS[selectedGroup] ?? []).filter(c => poolItems.some(d => d.category === c))
-    : [];
+  // ── Mode predicates ──
+  const isReal  = (d: DealItem) => d.discount_pct > 0;
+  const isWatch = (d: DealItem) => d.discount_pct === 0;
+  const inMode  = viewMode === 'deals' ? isReal : isWatch;
 
+  // ── Filtered list — single source of truth for both render and counts ──
   const filtered = useMemo(() => {
-    // If a specific fine-grained category is selected, use its pre-sorted pool (up to 10)
+    let list: DealItem[];
+
     if (selectedCat) {
-      let catItems = categories[selectedCat] ?? poolItems.filter(d => d.category === selectedCat);
-      if (realOnly) catItems = catItems.filter(d => d.discount_pct > 0);
-      return sortItems(catItems, sortKey).slice(0, MAX_CAT_VIEW);
+      // Use pre-built category bucket if available
+      list = (categories[selectedCat] ?? poolItems.filter(d => d.category === selectedCat))
+        .filter(inMode);
+      return sortItems(list, sortKey).slice(0, MAX_CAT_VIEW);
     }
-    // If a parent group is selected, use all items from that group
+
     if (selectedGroup) {
       const cats = CATEGORY_GROUPS[selectedGroup] ?? [];
-      let groupItems: DealItem[] = [];
-      for (const cat of cats) {
-        groupItems.push(...(categories[cat] ?? poolItems.filter(d => d.category === cat)));
-      }
-      if (realOnly) groupItems = groupItems.filter(d => d.discount_pct > 0);
-      return sortItems(groupItems, sortKey);
+      list = cats
+        .flatMap(cat => categories[cat] ?? poolItems.filter(d => d.category === cat))
+        .filter(inMode);
+      return sortItems(list, sortKey);
     }
-    // Default: global top-10 (pre-ranked by pipeline)
-    let list = realOnly ? items.filter(d => d.discount_pct > 0) : items;
+
+    // Global "全部": use the pre-ranked top-10 (matches pipeline intent)
+    list = items.filter(inMode);
     return sortItems(list, sortKey);
-  }, [items, categories, poolItems, realOnly, selectedGroup, selectedCat, sortKey]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, categories, poolItems, viewMode, selectedGroup, selectedCat, sortKey]);
+
+  // ── Count helpers — identical logic to filtered, just without slicing ──
+  // These power the chip badges; they mirror the filtered computation exactly.
+
+  function countGlobal(): number {
+    return items.filter(inMode).length;
+  }
+
+  function countGroup(group: string): number {
+    const cats = CATEGORY_GROUPS[group] ?? [];
+    return cats.reduce((sum, cat) => {
+      const pool = categories[cat] ?? poolItems.filter(d => d.category === cat);
+      return sum + pool.filter(inMode).length;
+    }, 0);
+  }
+
+  function countCat(cat: string): number {
+    const pool = categories[cat] ?? poolItems.filter(d => d.category === cat);
+    return pool.filter(inMode).length;
+  }
+
+  // Tab totals across the full pool
+  const totalDeals    = poolItems.filter(isReal).length;
+  const totalWatching = poolItems.filter(isWatch).length;
+
+  // ── Derived nav state ──
+  const activeGroups = GROUP_ORDER.filter(g => countGroup(g) > 0);
+  const subCats = selectedGroup
+    ? (CATEGORY_GROUPS[selectedGroup] ?? []).filter(c => countCat(c) > 0)
+    : [];
 
   function pickGroup(g: string | null) {
     setSelectedGroup(g);
     setSelectedCat(null);
   }
 
-  // ── Shared chip style helpers ──
-  const chipBase = 'text-xs font-medium px-3 py-1.5 rounded-full border transition-all cursor-pointer select-none';
+  function switchMode(m: ViewMode) {
+    setViewMode(m);
+    pickGroup(null);
+  }
+
+  // ── Chip styles ──
+  const chipBase   = 'text-xs font-medium px-3 py-1.5 rounded-full border transition-all cursor-pointer select-none';
   const chipIdle   = `${chipBase} bg-white border-gray-200 text-gray-600 hover:border-orange-300 hover:text-orange-600`;
   const chipActive = `${chipBase} bg-orange-500 border-orange-500 text-white shadow-sm`;
-
-  const subBase   = 'text-xs px-2.5 py-1 rounded-full border cursor-pointer transition-colors select-none';
-  const subIdle   = `${subBase} bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100`;
-  const subActive = `${subBase} bg-orange-100 text-orange-700 font-medium border-orange-200`;
+  const subBase    = 'text-xs px-2.5 py-1 rounded-full border cursor-pointer transition-colors select-none';
+  const subIdle    = `${subBase} bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100`;
+  const subActive  = `${subBase} bg-orange-100 text-orange-700 font-medium border-orange-200`;
 
   return (
     <div>
-      {/* ── Top toolbar: sort + real-deal toggle ── */}
-      <div className="flex items-center justify-between gap-3 mb-4 flex-wrap">
-        {/* Sort tabs */}
+
+      {/* ── Mode tabs: 好价榜 / 关注价 ── */}
+      <div className="flex items-center gap-1 mb-5 border-b border-gray-100 pb-3">
+        <button
+          onClick={() => switchMode('deals')}
+          className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+            viewMode === 'deals'
+              ? 'bg-orange-50 text-orange-600 border border-orange-200'
+              : 'text-gray-400 hover:text-gray-700'
+          }`}
+        >
+          好价榜
+          <span className={`text-xs px-1.5 py-0.5 rounded-full font-normal ${
+            viewMode === 'deals' ? 'bg-orange-100 text-orange-600' : 'bg-gray-100 text-gray-400'
+          }`}>
+            {totalDeals}
+          </span>
+        </button>
+
+        <button
+          onClick={() => switchMode('watching')}
+          className={`flex items-center gap-1.5 text-sm font-semibold px-3 py-1.5 rounded-lg transition-all cursor-pointer ${
+            viewMode === 'watching'
+              ? 'bg-gray-100 text-gray-700 border border-gray-200'
+              : 'text-gray-400 hover:text-gray-700'
+          }`}
+        >
+          关注价
+          <span className={`text-xs px-1.5 py-0.5 rounded-full font-normal ${
+            viewMode === 'watching' ? 'bg-gray-200 text-gray-600' : 'bg-gray-100 text-gray-400'
+          }`}>
+            {totalWatching}
+          </span>
+        </button>
+
+        {viewMode === 'watching' && (
+          <span className="ml-3 text-xs text-gray-400">暂无折扣数据，但价格值得关注</span>
+        )}
+      </div>
+
+      {/* ── Sort bar ── */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
         <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
           {SORT_OPTIONS.map(opt => (
             <button
@@ -141,42 +210,18 @@ export default function DealListClient({ items, categories = {} }: Props) {
             </button>
           ))}
         </div>
-
-        {/* Real-discount toggle */}
-        <button
-          onClick={() => setRealOnly(!realOnly)}
-          className={`flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full border font-medium transition-all cursor-pointer ${
-            realOnly
-              ? 'bg-green-50 border-green-400 text-green-700'
-              : 'bg-white border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600'
-          }`}
-        >
-          <span className={`w-3 h-3 rounded-full border-2 flex-shrink-0 ${
-            realOnly ? 'bg-green-500 border-green-500' : 'border-gray-300'
-          }`} />
-          仅看真实降价
-          {realOnly && <span className="text-green-600 font-semibold">{realCount}</span>}
-        </button>
       </div>
 
-      {/* ── Category group filter ── */}
+      {/* ── Category group chips ── */}
       <div className="flex flex-wrap gap-2 mb-3">
         <button onClick={() => pickGroup(null)} className={selectedGroup === null ? chipActive : chipIdle}>
-          全部 · {realOnly ? realCount : items.length}
+          全部 · {countGlobal()}
         </button>
-        {activeGroups.map(g => {
-          const cats = CATEGORY_GROUPS[g] ?? [];
-          const count = cats.reduce((sum, cat) => {
-            const catItems = categories[cat] ?? poolItems.filter(d => d.category === cat);
-            return sum + (realOnly ? catItems.filter(d => d.discount_pct > 0) : catItems).length;
-          }, 0);
-          if (count === 0) return null;
-          return (
-            <button key={g} onClick={() => pickGroup(g)} className={selectedGroup === g ? chipActive : chipIdle}>
-              {g} · {count}
-            </button>
-          );
-        })}
+        {activeGroups.map(g => (
+          <button key={g} onClick={() => pickGroup(g)} className={selectedGroup === g ? chipActive : chipIdle}>
+            {g} · {countGroup(g)}
+          </button>
+        ))}
       </div>
 
       {/* ── Sub-category chips ── */}
@@ -185,31 +230,29 @@ export default function DealListClient({ items, categories = {} }: Props) {
           <button onClick={() => setSelectedCat(null)} className={selectedCat === null ? subActive : subIdle}>
             全部
           </button>
-          {subCats.map(cat => {
-            const count = items.filter(d => d.category === cat && (!realOnly || d.discount_pct > 0)).length;
-            if (count === 0) return null;
-            return (
-              <button key={cat} onClick={() => setSelectedCat(cat)} className={selectedCat === cat ? subActive : subIdle}>
-                {cat} · {count}
-              </button>
-            );
-          })}
+          {subCats.map(cat => (
+            <button key={cat} onClick={() => setSelectedCat(cat)} className={selectedCat === cat ? subActive : subIdle}>
+              {cat} · {countCat(cat)}
+            </button>
+          ))}
         </div>
       )}
 
       {/* ── Deal list ── */}
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
-          <p className="text-3xl mb-2">📭</p>
+          <p className="text-3xl mb-2">{viewMode === 'deals' ? '📭' : '👀'}</p>
           <p className="text-sm">
-            {realOnly ? '该分类今日暂无真实降价折扣' : '该分类今日暂无折扣'}
+            {viewMode === 'deals'
+              ? '该品类今日暂无真实折扣'
+              : '该品类今日暂无关注价商品'}
           </p>
-          {realOnly && (
+          {viewMode === 'deals' && totalWatching > 0 && (
             <button
-              onClick={() => setRealOnly(false)}
-              className="mt-3 text-xs text-orange-500 hover:underline cursor-pointer"
+              onClick={() => switchMode('watching')}
+              className="mt-3 text-xs text-gray-400 hover:text-orange-500 cursor-pointer transition-colors"
             >
-              查看全部条目 →
+              查看关注价 ({totalWatching} 条) →
             </button>
           )}
         </div>
@@ -220,6 +263,7 @@ export default function DealListClient({ items, categories = {} }: Props) {
           ))}
         </div>
       )}
+
     </div>
   );
 }
