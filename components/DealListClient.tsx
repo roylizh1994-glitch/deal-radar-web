@@ -17,11 +17,6 @@ const CATEGORY_GROUPS: Record<string, string[]> = {
   '其他':      ['Other'],
 };
 
-const CAT_TO_GROUP: Record<string, string> = {};
-for (const [group, cats] of Object.entries(CATEGORY_GROUPS)) {
-  for (const cat of cats) CAT_TO_GROUP[cat] = group;
-}
-
 const GROUP_ORDER = Object.keys(CATEGORY_GROUPS);
 
 // ── Sort ──────────────────────────────────────────────────────────────────────
@@ -49,15 +44,13 @@ function sortItems(items: DealItem[], sort: SortKey): DealItem[] {
 
 // ── View mode ─────────────────────────────────────────────────────────────────
 
-type ViewMode = 'deals'    // 好价榜: discount_pct > 0
+type ViewMode = 'deals'     // 好价榜: discount_pct > 0
               | 'watching'; // 关注价: discount_pct === 0
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
-  /** Global top-10 for the default "全部" view (pre-ranked by pipeline) */
   items: DealItem[];
-  /** Per-category pools — each sorted by score, max 10 */
   categories?: Record<string, DealItem[]>;
 }
 
@@ -69,79 +62,70 @@ export default function DealListClient({ items, categories = {} }: Props) {
   const [selectedCat,   setSelectedCat]   = useState<string | null>(null);
   const [sortKey,       setSortKey]       = useState<SortKey>('score');
 
-  // Flat pool from all category buckets (richer than global top-10)
-  const allCatItems = useMemo(() => Object.values(categories).flat(), [categories]);
-  const poolItems   = allCatItems.length > 0 ? allCatItems : items;
+  // ── Unified item pool ──────────────────────────────────────────────────────
+  // All category buckets flattened.  Falls back to global items if no buckets.
+  const poolItems = useMemo(() => {
+    const flat = Object.values(categories).flat();
+    return flat.length > 0 ? flat : items;
+  }, [categories, items]);
 
-  // ── Mode predicates ──
+  // ── Mode predicates (stable references to avoid useMemo dep issues) ────────
   const isReal  = (d: DealItem) => d.discount_pct > 0;
   const isWatch = (d: DealItem) => d.discount_pct === 0;
-  const inMode  = viewMode === 'deals' ? isReal : isWatch;
 
-  // ── Filtered list — single source of truth for both render and counts ──
+  // ── Helpers: pool for a category/group ────────────────────────────────────
+  function catPool(cat: string): DealItem[] {
+    return categories[cat] ?? poolItems.filter(d => d.category === cat);
+  }
+  function groupPool(group: string): DealItem[] {
+    return (CATEGORY_GROUPS[group] ?? []).flatMap(cat => catPool(cat));
+  }
+
+  // ── Filtered list — the ONE source of truth ────────────────────────────────
+  // count badges and rendered list both derive from this.
   const filtered = useMemo(() => {
-    let list: DealItem[];
+    const inMode = viewMode === 'deals' ? isReal : isWatch;
 
     if (selectedCat) {
-      // Use pre-built category bucket if available
-      list = (categories[selectedCat] ?? poolItems.filter(d => d.category === selectedCat))
-        .filter(inMode);
-      return sortItems(list, sortKey).slice(0, MAX_CAT_VIEW);
+      return sortItems(catPool(selectedCat).filter(inMode), sortKey)
+        .slice(0, MAX_CAT_VIEW);
     }
-
     if (selectedGroup) {
-      const cats = CATEGORY_GROUPS[selectedGroup] ?? [];
-      list = cats
-        .flatMap(cat => categories[cat] ?? poolItems.filter(d => d.category === cat))
-        .filter(inMode);
-      return sortItems(list, sortKey);
+      return sortItems(groupPool(selectedGroup).filter(inMode), sortKey);
     }
-
-    // Global "全部": use the pre-ranked top-10 (matches pipeline intent)
-    list = items.filter(inMode);
-    return sortItems(list, sortKey);
+    // "全部" uses poolItems (all buckets), same array as tab-level counts
+    return sortItems(poolItems.filter(inMode), sortKey);
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, categories, poolItems, viewMode, selectedGroup, selectedCat, sortKey]);
+  }, [poolItems, categories, viewMode, selectedGroup, selectedCat, sortKey]);
 
-  // ── Count helpers — identical logic to filtered, just without slicing ──
-  // These power the chip badges; they mirror the filtered computation exactly.
-
-  function countGlobal(): number {
-    return items.filter(inMode).length;
-  }
-
-  function countGroup(group: string): number {
-    const cats = CATEGORY_GROUPS[group] ?? [];
-    return cats.reduce((sum, cat) => {
-      const pool = categories[cat] ?? poolItems.filter(d => d.category === cat);
-      return sum + pool.filter(inMode).length;
-    }, 0);
-  }
-
-  function countCat(cat: string): number {
-    const pool = categories[cat] ?? poolItems.filter(d => d.category === cat);
-    return pool.filter(inMode).length;
-  }
-
-  // Tab totals across the full pool
+  // ── Count helpers — mirror filtered exactly (no slicing for nav) ──────────
+  // All three: tab totals, group chips, sub-cat chips derive from poolItems too.
   const totalDeals    = poolItems.filter(isReal).length;
   const totalWatching = poolItems.filter(isWatch).length;
 
-  // ── Derived nav state ──
+  function countGlobal(): number {
+    // Must equal filtered.length when no group/cat is selected
+    const inMode = viewMode === 'deals' ? isReal : isWatch;
+    return poolItems.filter(inMode).length;
+  }
+  function countGroup(group: string): number {
+    const inMode = viewMode === 'deals' ? isReal : isWatch;
+    return groupPool(group).filter(inMode).length;
+  }
+  function countCat(cat: string): number {
+    const inMode = viewMode === 'deals' ? isReal : isWatch;
+    return catPool(cat).filter(inMode).length;
+  }
+
+  // ── Active groups/sub-cats (only those with > 0 items in current mode) ──
   const activeGroups = GROUP_ORDER.filter(g => countGroup(g) > 0);
   const subCats = selectedGroup
     ? (CATEGORY_GROUPS[selectedGroup] ?? []).filter(c => countCat(c) > 0)
     : [];
 
-  function pickGroup(g: string | null) {
-    setSelectedGroup(g);
-    setSelectedCat(null);
-  }
-
-  function switchMode(m: ViewMode) {
-    setViewMode(m);
-    pickGroup(null);
-  }
+  // ── Nav helpers ──
+  function pickGroup(g: string | null) { setSelectedGroup(g); setSelectedCat(null); }
+  function switchMode(m: ViewMode)     { setViewMode(m); pickGroup(null); }
 
   // ── Chip styles ──
   const chipBase   = 'text-xs font-medium px-3 py-1.5 rounded-full border transition-all cursor-pointer select-none';
@@ -151,10 +135,15 @@ export default function DealListClient({ items, categories = {} }: Props) {
   const subIdle    = `${subBase} bg-gray-50 text-gray-500 border-gray-100 hover:bg-gray-100`;
   const subActive  = `${subBase} bg-orange-100 text-orange-700 font-medium border-orange-200`;
 
+  // ── Empty-state text ──
+  const emptyText = selectedCat ?? selectedGroup
+    ? viewMode === 'deals' ? '该品类今日暂无真实折扣' : '该品类今日暂无关注价商品'
+    : viewMode === 'deals' ? '今日暂无真实折扣' : '今日暂无关注价商品';
+
   return (
     <div>
 
-      {/* ── Mode tabs: 好价榜 / 关注价 ── */}
+      {/* ── Mode tabs ── */}
       <div className="flex items-center gap-1 mb-5 border-b border-gray-100 pb-3">
         <button
           onClick={() => switchMode('deals')}
@@ -189,7 +178,9 @@ export default function DealListClient({ items, categories = {} }: Props) {
         </button>
 
         {viewMode === 'watching' && (
-          <span className="ml-3 text-xs text-gray-400">暂无折扣数据，但价格值得关注</span>
+          <span className="ml-3 text-xs text-gray-400 hidden sm:inline">
+            价格持平或接近低位，建议关注
+          </span>
         )}
       </div>
 
@@ -212,26 +203,40 @@ export default function DealListClient({ items, categories = {} }: Props) {
         </div>
       </div>
 
-      {/* ── Category group chips ── */}
+      {/* ── Group chips ── */}
       <div className="flex flex-wrap gap-2 mb-3">
-        <button onClick={() => pickGroup(null)} className={selectedGroup === null ? chipActive : chipIdle}>
+        <button
+          onClick={() => pickGroup(null)}
+          className={selectedGroup === null ? chipActive : chipIdle}
+        >
           全部 · {countGlobal()}
         </button>
         {activeGroups.map(g => (
-          <button key={g} onClick={() => pickGroup(g)} className={selectedGroup === g ? chipActive : chipIdle}>
+          <button
+            key={g}
+            onClick={() => pickGroup(g)}
+            className={selectedGroup === g ? chipActive : chipIdle}
+          >
             {g} · {countGroup(g)}
           </button>
         ))}
       </div>
 
-      {/* ── Sub-category chips ── */}
+      {/* ── Sub-cat chips ── */}
       {subCats.length > 1 && (
         <div className="flex flex-wrap gap-1.5 mb-4 pl-1">
-          <button onClick={() => setSelectedCat(null)} className={selectedCat === null ? subActive : subIdle}>
+          <button
+            onClick={() => setSelectedCat(null)}
+            className={selectedCat === null ? subActive : subIdle}
+          >
             全部
           </button>
           {subCats.map(cat => (
-            <button key={cat} onClick={() => setSelectedCat(cat)} className={selectedCat === cat ? subActive : subIdle}>
+            <button
+              key={cat}
+              onClick={() => setSelectedCat(cat)}
+              className={selectedCat === cat ? subActive : subIdle}
+            >
               {cat} · {countCat(cat)}
             </button>
           ))}
@@ -242,11 +247,7 @@ export default function DealListClient({ items, categories = {} }: Props) {
       {filtered.length === 0 ? (
         <div className="text-center py-16 text-gray-400">
           <p className="text-3xl mb-2">{viewMode === 'deals' ? '📭' : '👀'}</p>
-          <p className="text-sm">
-            {viewMode === 'deals'
-              ? '该品类今日暂无真实折扣'
-              : '该品类今日暂无关注价商品'}
-          </p>
+          <p className="text-sm">{emptyText}</p>
           {viewMode === 'deals' && totalWatching > 0 && (
             <button
               onClick={() => switchMode('watching')}
@@ -259,7 +260,12 @@ export default function DealListClient({ items, categories = {} }: Props) {
       ) : (
         <div className="flex flex-col gap-3">
           {filtered.map((deal, idx) => (
-            <DealCard key={deal.id} deal={deal} displayRank={idx + 1} />
+            <DealCard
+              key={deal.id}
+              deal={deal}
+              displayRank={idx + 1}
+              isWatching={viewMode === 'watching'}
+            />
           ))}
         </div>
       )}

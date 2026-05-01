@@ -33,7 +33,7 @@ function formatVerifiedTime(iso?: string): string | null {
   return new Date(iso).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function DealCard({ deal, displayRank }: { deal: DealItem; displayRank?: number }) {
+export default function DealCard({ deal, displayRank, isWatching }: { deal: DealItem; displayRank?: number; isWatching?: boolean }) {
   const rank = displayRank ?? deal.rank;
   const catColor = CATEGORY_COLORS[deal.category] ?? CATEGORY_COLORS.Other;
   const hasDiscount = deal.discount_pct > 0;
@@ -51,9 +51,13 @@ export default function DealCard({ deal, displayRank }: { deal: DealItem; displa
 
         {/* Rank */}
         <div className="flex-shrink-0 w-7 pt-0.5 text-center">
-          <span className={`text-sm font-bold ${rank <= 3 ? 'text-orange-500' : 'text-gray-300'}`}>
-            #{rank}
-          </span>
+          {isWatching ? (
+            <span className="text-sm text-gray-200">·</span>
+          ) : (
+            <span className={`text-sm font-bold ${rank <= 3 ? 'text-orange-500' : 'text-gray-300'}`}>
+              #{rank}
+            </span>
+          )}
         </div>
 
         {/* Main content */}
@@ -117,8 +121,8 @@ export default function DealCard({ deal, displayRank }: { deal: DealItem; displa
                 看比价
               </a>
             ) : (
-              <span className="text-xs text-gray-300 pl-1">
-                前往 {displayDomain}
+              <span className="text-xs text-gray-200 px-2.5 py-1.5 rounded-lg border border-gray-100 cursor-not-allowed select-none">
+                比价数据不足
               </span>
             )}
 
