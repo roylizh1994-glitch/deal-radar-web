@@ -1,41 +1,77 @@
 {
-  "generated_at": "2026-05-01T07:39:39.437Z",
+  "generated_at": "2026-05-01T07:47:00.361Z",
   "date": "2026-05-01",
-  "raw_count": 150,
-  "filtered_count": 136,
-  "parsed_count": 136,
-  "qualified_count": 28,
-  "deduped_count": 28,
-  "published_count": 10,
-  "qualified_rate": 0.206,
+  "raw_count": 325,
+  "filtered_count": 244,
+  "parsed_count": 244,
+  "qualified_count": 40,
+  "deduped_count": 40,
+  "published_count": 40,
+  "active_categories": 12,
+  "category_counts": {
+    "Gaming": 5,
+    "TV": 4,
+    "Camera": 1,
+    "Accessory": 2,
+    "Laptop": 10,
+    "Monitor": 5,
+    "Audio": 2,
+    "Wearable": 1,
+    "PC Parts": 7,
+    "Tablet": 1,
+    "Phone": 1,
+    "CPU": 1
+  },
+  "qualified_rate": 0.164,
   "duplicate_ratio": 0,
   "broken_link_ratio": 0,
   "publish_mode": "FULL_PUBLISH",
   "reject_reason_top5": [
     {
-      "code": "QG009",
-      "reason": "CATEGORY_BLOCKED",
-      "count": 75
-    },
-    {
       "code": "QG015",
       "reason": "POST_TOO_OLD",
-      "count": 56
+      "count": 107
+    },
+    {
+      "code": "QG009",
+      "reason": "CATEGORY_BLOCKED",
+      "count": 106
     },
     {
       "code": "QG001",
       "reason": "MISSING_REQUIRED_FIELD",
-      "count": 37
+      "count": 91
     },
     {
       "code": "QG013",
       "reason": "REDDIT_THREAD_NO_MERCHANT",
-      "count": 5
+      "count": 46
+    },
+    {
+      "code": "QG007",
+      "reason": "URL_DOMAIN_NOT_ALLOWLISTED",
+      "count": 4
     }
   ],
   "sample_rejects": [
     {
-      "id": "sd_1777621179424_3",
+      "id": "sd_1777621620341_1",
+      "title": "Star Wars: Original, Prequel or Sequel Trilogy (1977-2019) (4K Digital Films) $20 Each",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG009"
+      ]
+    },
+    {
+      "id": "sd_1777621620344_2",
+      "title": "65-Pc Vevor/SucceBuy 1/2\" Drive Impact Socket Set (SAE & Metric) $40.70 + Free S&H",
+      "source": "slickdeals.net",
+      "error_codes": [
+        "QG009"
+      ]
+    },
+    {
+      "id": "sd_1777621620345_5",
       "title": "Grubhub+ Members: Gold Days Weekly Offers w/ Purchase thru May 31 See Thread for Details + 6-Mon Grubhub+ $0.99/Mon Offer",
       "source": "slickdeals.net",
       "error_codes": [
@@ -44,7 +80,7 @@
       ]
     },
     {
-      "id": "sd_1777621179425_5",
+      "id": "sd_1777621620345_7",
       "title": "Eco-Worthy 5000W 48V Hybrid Solar Inverter $367.70 + Free S&H",
       "source": "slickdeals.net",
       "error_codes": [
@@ -52,24 +88,8 @@
       ]
     },
     {
-      "id": "sd_1777621179425_6",
+      "id": "sd_1777621620345_8",
       "title": "Vynix 3D Blackout Sleep Mask for Side Sleepers (Black) $4.60",
-      "source": "slickdeals.net",
-      "error_codes": [
-        "QG009"
-      ]
-    },
-    {
-      "id": "sd_1777621179425_7",
-      "title": "1.69-Oz GANGNAM GLOW Day SPF 50 Tinted Sunscreen $12 w/ S&S",
-      "source": "slickdeals.net",
-      "error_codes": [
-        "QG009"
-      ]
-    },
-    {
-      "id": "sd_1777621179425_9",
-      "title": "Anker 2-in-1 USB-C to 2x USB-C 140W Max Fast Charging Cable: 6-ft $18, 4-ft $15",
       "source": "slickdeals.net",
       "error_codes": [
         "QG009"

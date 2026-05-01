@@ -19,23 +19,29 @@ export interface RssFeed {
 }
 
 export const RSS_FEEDS: RssFeed[] = [
-  // Tier-2: curated deal aggregators (direct links, no age limit)
+  // ── Tier-2: curated deal aggregators ─────────────────────────────────────
   {
     url: 'https://slickdeals.net/newsearch.php?mode=frontpage&searcharea=deals&searchin=first&rss=1',
     name: 'Slickdeals Frontpage',
     tier: 2,
   },
-  // 9to5Toys: Apple/tech deals, links to 9to5toys.com articles
-  {
-    url: 'https://9to5toys.com/feed/',
-    name: '9to5Toys',
-    tier: 2,
-  },
+  // 9to5Toys: Apple/tech deals
+  { url: 'https://9to5toys.com/feed/',   name: '9to5Toys', tier: 2 },
+  // 9to5Mac: Mac/iPhone/iPad/AirPods/Apple Watch deals
+  { url: 'https://9to5mac.com/deals/feed/', name: '9to5Mac', tier: 2 },
 
-  // Tier-3: Reddit community posts — use new.rss for maximum freshness
+  // ── Tier-3: Reddit community posts ───────────────────────────────────────
+  // PC components
   { url: 'https://www.reddit.com/r/buildapcsales/new.rss', name: 'r/buildapcsales', tier: 3 },
-  { url: 'https://www.reddit.com/r/deals/new.rss',         name: 'r/deals',         tier: 3 },
-  { url: 'https://www.reddit.com/r/techdeals/new.rss',     name: 'r/techdeals',     tier: 3 },
+  // General tech deals
+  { url: 'https://www.reddit.com/r/deals/new.rss',     name: 'r/deals',     tier: 3 },
+  { url: 'https://www.reddit.com/r/techdeals/new.rss', name: 'r/techdeals', tier: 3 },
+  // Laptops
+  { url: 'https://www.reddit.com/r/laptopdeals/new.rss', name: 'r/laptopdeals', tier: 3 },
+  // Apple products
+  { url: 'https://www.reddit.com/r/appledeals/new.rss',  name: 'r/appledeals',  tier: 3 },
+  // Games / software
+  { url: 'https://www.reddit.com/r/GameDeals/new.rss',   name: 'r/GameDeals',   tier: 3 },
 ];
 
 const BROWSER_UA = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36';

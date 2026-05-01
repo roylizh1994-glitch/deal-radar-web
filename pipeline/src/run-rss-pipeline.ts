@@ -71,12 +71,13 @@ async function main() {
 
   // Step 2: Pre-filter RSS items then parse
   console.log('Step 2: Parsing deals...');
+  const DEAL_KW = /\b(deal|sale|discount|off|save|score|grab|priced?|from \$|at \$|just \$|\$\d+|low|save)\b/i;
+  const NEWS_KW = /\b(leak|rumor|roundup|review|announce|official|launch|hands.?on|look at|report|preview)\b/i;
+
   const filteredItems = rssItems.filter(item => {
-    // 9to5Toys: skip news/rumors/roundups without a price signal
-    if (item.feedName === '9to5Toys') {
-      const hasDealKeyword = /\b(deal|sale|discount|off|save|score|grab|priced?|from \$|at \$|just \$|\$\d+)\b/i.test(item.title);
-      const hasNewsKeyword = /\b(leak|rumor|roundup|review|announce|official|launch|hands.?on|look at|report)\b/i.test(item.title);
-      return hasDealKeyword && !hasNewsKeyword;
+    // 9to5Toys + 9to5Mac: article feeds — only keep posts with price signals
+    if (item.feedName === '9to5Toys' || item.feedName === '9to5Mac') {
+      return DEAL_KW.test(item.title) && !NEWS_KW.test(item.title);
     }
     return true;
   });
@@ -140,33 +141,50 @@ async function main() {
   );
   console.log(`  Top deal: "${deduped[0]?.title ?? '(none)'}"\n`);
 
-  // Step 6: Publish decision (sync — no live link check; domain allowlist is the trust signal)
-  console.log('Step 6: Publish decision...');
-  const publishDecision = decidePublishSync(
-    deduped,
-    { passed: gateSummary.error_breakdown.length === 0, blocking_failures: [] },
-    10
+  // Step 6: Build per-category top-10 + global top-10
+  console.log('Step 6: Building category top-10 lists...');
+
+  const MAX_PER_CAT = 10;
+  const MAX_GLOBAL  = 10;
+
+  // Group deduped (already sorted by composite score) into per-category buckets
+  const categoryBuckets = new Map<string, typeof deduped>();
+  for (const deal of deduped) {
+    const cat = deal.category;
+    if (!categoryBuckets.has(cat)) categoryBuckets.set(cat, []);
+    const bucket = categoryBuckets.get(cat)!;
+    if (bucket.length < MAX_PER_CAT) bucket.push(deal);
+  }
+
+  // All items that made it into any category bucket (unique, re-sorted globally)
+  const allPublished = deduped.filter(d =>
+    (categoryBuckets.get(d.category) ?? []).includes(d)
   );
-  console.log(`  Mode: ${publishDecision.mode}`);
-  console.log(`  Published: ${publishDecision.published_items.length} items`);
-  if (publishDecision.banner_message) {
-    console.log(`  Banner: ${publishDecision.banner_message}`);
+  const globalTop10 = allPublished.slice(0, MAX_GLOBAL);
+
+  const totalPublished = allPublished.length;
+  const activeCats = categoryBuckets.size;
+
+  const mode = totalPublished >= MAX_GLOBAL ? 'FULL_PUBLISH' : 'PARTIAL_PUBLISH';
+  const banner = mode === 'PARTIAL_PUBLISH'
+    ? `今日共 ${totalPublished} 条通过质量门槛，覆盖 ${activeCats} 个品类`
+    : null;
+
+  console.log(`  Mode: ${mode}`);
+  console.log(`  Total published: ${totalPublished} across ${activeCats} categories`);
+  for (const [cat, items] of categoryBuckets) {
+    console.log(`    ${cat}: ${items.length}`);
   }
   console.log();
 
   // Step 7: Write homepage.json
   const dataDir = ensureDir(FRONTEND_DATA_DIR);
   const today = new Date().toISOString().slice(0, 10);
-
   const nowIso = new Date().toISOString();
 
-  const homepagePayload = {
-    generated_at: nowIso,
-    date: today,
-    mode: publishDecision.mode,
-    banner: publishDecision.banner_message ?? null,
-    items: publishDecision.published_items.map((deal, i) => ({
-      rank: i + 1,
+  function serializeDeal(deal: typeof deduped[0], rank: number) {
+    return {
+      rank,
       id: deal.id,
       title: deal.title,
       brand: deal.brand,
@@ -180,7 +198,27 @@ async function main() {
       confidence_score: Math.round(deal.confidence_score * 100) / 100,
       deal_url: deal.deal_url,
       verified_at: nowIso,
-    })),
+    };
+  }
+
+  // Build category map: { "GPU": [...up to 10 serialized deals] }
+  const categoryMap: Record<string, ReturnType<typeof serializeDeal>[]> = {};
+  for (const [cat, items] of categoryBuckets) {
+    categoryMap[cat] = items.map((d, i) => serializeDeal(d, i + 1));
+  }
+
+  const homepagePayload = {
+    generated_at: nowIso,
+    date: today,
+    mode,
+    banner,
+    // Global top-10 (all-category combined, by score)
+    items: globalTop10.map((d, i) => serializeDeal(d, i + 1)),
+    // Per-category top-10
+    categories: categoryMap,
+    category_counts: Object.fromEntries(
+      [...categoryBuckets.entries()].map(([cat, items]) => [cat, items.length])
+    ),
   };
 
   const outPath = join(dataDir, 'homepage.json');
@@ -207,11 +245,13 @@ async function main() {
     parsed_count: rawDeals.length,
     qualified_count: gateSummary.passed,
     deduped_count: deduped.length,
-    published_count: homepagePayload.items.length,
+    published_count: totalPublished,
+    active_categories: activeCats,
+    category_counts: homepagePayload.category_counts,
     qualified_rate: Math.round(gateSummary.qualified_rate * 1000) / 1000,
     duplicate_ratio: rawDeals.length > 0 ? Math.round((dedupResult.dropped_duplicates / rawDeals.length) * 1000) / 1000 : 0,
     broken_link_ratio: 0,
-    publish_mode: publishDecision.mode,
+    publish_mode: mode,
     reject_reason_top5: rejectBreakdown,
     sample_rejects: gateSummary.sample_rejects.slice(0, 5),
   };

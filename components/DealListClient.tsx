@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import DealCard from './DealCard';
-import type { DealItem } from '@/lib/types';
+import type { DealItem, HomepageData } from '@/lib/types';
 
 // ── Category hierarchy ────────────────────────────────────────────────────────
 
@@ -55,29 +55,57 @@ function sortItems(items: DealItem[], sort: SortKey): DealItem[] {
 
 // ── Component ─────────────────────────────────────────────────────────────────
 
-interface Props { items: DealItem[] }
+interface Props {
+  /** Global top-10 for the default "全部" view */
+  items: DealItem[];
+  /** Per-category pools (each already up to 10 items, sorted by score) */
+  categories?: Record<string, DealItem[]>;
+}
 
-export default function DealListClient({ items }: Props) {
+const MAX_CAT_VIEW = 10;
+
+export default function DealListClient({ items, categories = {} }: Props) {
   const [selectedGroup, setSelectedGroup] = useState<string | null>(null);
   const [selectedCat,   setSelectedCat]   = useState<string | null>(null);
   const [sortKey,       setSortKey]       = useState<SortKey>('score');
   const [realOnly,      setRealOnly]      = useState(false);
 
-  const realCount    = items.filter(d => d.discount_pct > 0).length;
+  // All items across all category pools (for counts / toggles)
+  const allCatItems = useMemo(() =>
+    Object.values(categories).flat(), [categories]
+  );
+  // Fall back to global top-10 if no per-category data
+  const poolItems = allCatItems.length > 0 ? allCatItems : items;
+
+  const realCount    = poolItems.filter(d => d.discount_pct > 0).length;
   const activeGroups = GROUP_ORDER.filter(g =>
-    items.some(d => CAT_TO_GROUP[d.category] === g)
+    poolItems.some(d => CAT_TO_GROUP[d.category] === g)
   );
   const subCats = selectedGroup
-    ? (CATEGORY_GROUPS[selectedGroup] ?? []).filter(c => items.some(d => d.category === c))
+    ? (CATEGORY_GROUPS[selectedGroup] ?? []).filter(c => poolItems.some(d => d.category === c))
     : [];
 
   const filtered = useMemo(() => {
-    let list = items;
-    if (realOnly)      list = list.filter(d => d.discount_pct > 0);
-    if (selectedCat)   list = list.filter(d => d.category === selectedCat);
-    else if (selectedGroup) list = list.filter(d => CAT_TO_GROUP[d.category] === selectedGroup);
+    // If a specific fine-grained category is selected, use its pre-sorted pool (up to 10)
+    if (selectedCat) {
+      let catItems = categories[selectedCat] ?? poolItems.filter(d => d.category === selectedCat);
+      if (realOnly) catItems = catItems.filter(d => d.discount_pct > 0);
+      return sortItems(catItems, sortKey).slice(0, MAX_CAT_VIEW);
+    }
+    // If a parent group is selected, use all items from that group
+    if (selectedGroup) {
+      const cats = CATEGORY_GROUPS[selectedGroup] ?? [];
+      let groupItems: DealItem[] = [];
+      for (const cat of cats) {
+        groupItems.push(...(categories[cat] ?? poolItems.filter(d => d.category === cat)));
+      }
+      if (realOnly) groupItems = groupItems.filter(d => d.discount_pct > 0);
+      return sortItems(groupItems, sortKey);
+    }
+    // Default: global top-10 (pre-ranked by pipeline)
+    let list = realOnly ? items.filter(d => d.discount_pct > 0) : items;
     return sortItems(list, sortKey);
-  }, [items, realOnly, selectedGroup, selectedCat, sortKey]);
+  }, [items, categories, poolItems, realOnly, selectedGroup, selectedCat, sortKey]);
 
   function pickGroup(g: string | null) {
     setSelectedGroup(g);
@@ -137,8 +165,11 @@ export default function DealListClient({ items }: Props) {
           全部 · {realOnly ? realCount : items.length}
         </button>
         {activeGroups.map(g => {
-          const count = (realOnly ? items.filter(d => d.discount_pct > 0) : items)
-            .filter(d => CAT_TO_GROUP[d.category] === g).length;
+          const cats = CATEGORY_GROUPS[g] ?? [];
+          const count = cats.reduce((sum, cat) => {
+            const catItems = categories[cat] ?? poolItems.filter(d => d.category === cat);
+            return sum + (realOnly ? catItems.filter(d => d.discount_pct > 0) : catItems).length;
+          }, 0);
           if (count === 0) return null;
           return (
             <button key={g} onClick={() => pickGroup(g)} className={selectedGroup === g ? chipActive : chipIdle}>

@@ -22,5 +22,10 @@ export interface HomepageData {
   date: string;
   mode: PublishMode;
   banner: string | null;
+  /** Global top-10 across all categories (default view) */
   items: DealItem[];
+  /** Per-category top-10: { "GPU": [...], "Laptop": [...], ... } */
+  categories?: Record<string, DealItem[]>;
+  /** How many items each category has today */
+  category_counts?: Record<string, number>;
 }

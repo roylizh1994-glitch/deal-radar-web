@@ -26,9 +26,15 @@ const REDDIT_FLAIR_MAP: Record<string, string> = {
   ram: 'RAM', memory: 'RAM', dram: 'RAM',
   psu: 'PC Parts', 'power supply': 'PC Parts', motherboard: 'PC Parts',
   mobo: 'PC Parts', case: 'PC Parts', cooler: 'PC Parts',
-  router: 'Networking', switch: 'Networking', networking: 'Networking',
+  router: 'Networking', 'network switch': 'Networking', networking: 'Networking',
   modem: 'Networking', wifi: 'Networking',
   smartwatch: 'Wearable', watch: 'Wearable',
+  // Gaming platform flairs (r/GameDeals uses these)
+  steam: 'Gaming', epic: 'Gaming', gog: 'Gaming', humble: 'Gaming', itch: 'Gaming',
+  psn: 'Gaming', ps4: 'Gaming', ps5: 'Gaming', playstation: 'Gaming',
+  xbox: 'Gaming', 'xbox one': 'Gaming', 'xbox series': 'Gaming',
+  nintendo: 'Gaming', 'nintendo eshop': 'Gaming', 'nintendo switch': 'Gaming',
+  android: 'Gaming', ios: 'Gaming',
   software: 'Software', game: 'Software', games: 'Software', vpn: 'Software',
   accessory: 'Accessory', cable: 'Accessory', charger: 'Accessory',
   'power bank': 'Accessory', powerbank: 'Accessory', hub: 'Accessory',
@@ -81,8 +87,10 @@ const TITLE_PATTERNS: [RegExp, string][] = [
   // Accessory / Charging
   [/\b(power\s*bank|usb.?c\s*(hub|adapter|dock)|thunderbolt\s*dock|wireless\s*charger|magsafe|usb\s*hub)\b/i, 'Accessory'],
   [/\b(anker\s*\d{3}|baseus|iniu|belkin\s*charge|ravpower)\b/i, 'Accessory'],
-  // Gaming console
-  [/\b(steam\s*deck|ps5|playstation\s*5|xbox\s*(series|one|x|s)|nintendo\s*switch)\b/i, 'Gaming'],
+  // Gaming — consoles + PC gaming platforms
+  [/\b(steam\s*deck|ps5|playstation\s*(4|5)|xbox\s*(series\s*[xs]?|one|x\b|s\b)|nintendo\s*switch)\b/i, 'Gaming'],
+  [/\b(steam\s+sale|epic\s+games?\s+store|gog\.com|humble\s+bundle|itch\.io)\b/i, 'Gaming'],
+  [/\b(\[steam\]|\[epic\]|\[gog\]|\[humble\]|\[xbox\]|\[psn\]|\[nintendo\])\b/i, 'Gaming'],
   // Software
   [/\b(microsoft\s*365|microsoft\s*office|adobe\s*(cc|creative)|vpn\s*(subscription|deal)|antivirus)\b/i, 'Software'],
 ];

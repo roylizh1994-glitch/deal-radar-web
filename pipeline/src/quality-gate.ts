@@ -185,6 +185,7 @@ const ALLOWED_DOMAINS = new Set([
   // Tech deal aggregators (link to curated deal articles)
   '9to5toys.com', 'www.9to5toys.com',
   '9to5mac.com', 'www.9to5mac.com',
+  '9to5google.com', 'www.9to5google.com',
   'dealnews.com', 'www.dealnews.com',
   // US retailers extras
   'costco.com', 'www.costco.com',
