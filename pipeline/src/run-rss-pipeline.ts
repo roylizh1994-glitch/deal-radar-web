@@ -5,7 +5,7 @@
  * Flow: Fetch RSS → Parse deals → Quality gate → Dedupe → Score → Publish
  * Output: homepage.json + qa_report.json written to the frontend data directory.
  *
- * v3: connector plugin architecture (source-registry.ts), per-source QA stats.
+ * v3: connector plugin architecture, brand/category scoring model.
  */
 
 import { writeFileSync, mkdirSync, existsSync } from 'fs';
@@ -16,6 +16,10 @@ import { runGateOnBatch } from './quality-gate.js';
 import { deduplicate, computeCompositeScore } from './dedupe.js';
 import { decidePublishSync } from './publish-fallback.js';
 import { getActiveSources, SOURCES } from './source-registry.js';
+import {
+  getBrandMultiplier, getCategoryMultiplier, getCategoryTier,
+  getConditionMultiplier, getPriceFloorMultiplier,
+} from './brand-config.js';
 import type { SourceFetchStats } from './rss-fetcher.js';
 import type { RawDeal } from './quality-gate.js';
 
@@ -130,27 +134,34 @@ async function main() {
   console.log(`  After dedup: ${deduped.length} (dropped ${dedupResult.dropped_duplicates} duplicates)\n`);
 
   // Step 5: Score
+  // formula: final = business_score × brand_mult × category_mult × condition_mult × price_floor_mult × confidence_score
   console.log('Step 5: Computing scores...');
   for (const deal of deduped) {
+    // ── Base business score (unchanged) ─────────────────────────────────────
     const hasAtl = /\b(all.?time\s*low|historic\s*(low|price)|record\s*low|best\s*price\s*ever)\b/i.test(deal.title);
     const discountComponent = deal.discount_pct > 0
       ? Math.min(deal.discount_pct, 0.6) * (0.40 / 0.60)
       : hasAtl ? 0.10 : 0;
-
     const savingsAbs = Math.max(0, deal.price_original - deal.price_current);
     const savingsComponent = savingsAbs > 0
       ? Math.min(Math.log10(savingsAbs + 1) / Math.log10(101), 1) * 0.20
       : 0;
-
     const sourceTrustComponent = getSourceTrust(deal.source) * 0.20;
-    deal.score = 0.20 + discountComponent + savingsComponent + sourceTrustComponent;
+    const businessBase = 0.20 + discountComponent + savingsComponent + sourceTrustComponent;
 
-    // Apply source weight from registry
+    // ── Brand × category × condition × price-floor multipliers ──────────────
+    const brandMult    = getBrandMultiplier(deal.brand);
+    const catMult      = getCategoryMultiplier(deal.category);
+    const condMult     = getConditionMultiplier(deal.title);
+    const floorMult    = getPriceFloorMultiplier(deal.price_current, deal.category);
+
+    // ── Source weight from registry ─────────────────────────────────────────
     const srcCfg = activeSources.find(s => s.name === deal.feed_name);
-    if (srcCfg && srcCfg.weight !== 1.0) {
-      deal.score = Math.min(1.0, deal.score * srcCfg.weight);
-    }
+    const srcWeight = srcCfg?.weight ?? 1.0;
 
+    deal.score = Math.min(1.0, businessBase * brandMult * catMult * condMult * floorMult * srcWeight);
+
+    // ── Confidence score ─────────────────────────────────────────────────────
     const trust = getSourceTrust(deal.source);
     const composite = computeCompositeScore(deal, {
       field_completeness: calcFieldCompleteness(deal),
@@ -207,7 +218,11 @@ async function main() {
   function serializeDeal(deal: typeof deduped[0], rank: number) {
     return {
       rank, id: deal.id, title: deal.title, brand: deal.brand, model: deal.model,
-      category: deal.category, source: deal.source,
+      category: deal.category,
+      brand_tier: getBrandMultiplier(deal.brand) >= 1.20 ? 'S' :
+                  getBrandMultiplier(deal.brand) >= 1.00 ? 'A' : 'B',
+      category_tier: getCategoryTier(deal.category),
+      source: deal.source,
       price_current: deal.price_current, price_original: deal.price_original,
       discount_pct: Math.round(deal.discount_pct * 100),
       score: Math.round(deal.score * 100) / 100,
@@ -222,6 +237,30 @@ async function main() {
     categoryMap[cat] = items.map((d, i) => serializeDeal(d, i + 1));
   }
 
+  // ── Sidebar data: top brands + top merchants by published count ────────────
+  const brandCounts = new Map<string, number>();
+  const merchantCounts = new Map<string, number>();
+  for (const d of allPublished) {
+    if (d.brand && d.brand !== 'Unknown') {
+      const b = d.brand.toLowerCase();
+      brandCounts.set(b, (brandCounts.get(b) ?? 0) + 1);
+    }
+    if (d.source) {
+      merchantCounts.set(d.source, (merchantCounts.get(d.source) ?? 0) + 1);
+    }
+  }
+  const topBrands = [...brandCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 8)
+    .map(([brand]) => brand.charAt(0).toUpperCase() + brand.slice(1));
+
+  const MAJOR_MERCHANTS = ['amazon.com', 'bestbuy.com', 'walmart.com', 'target.com', 'newegg.com', 'bhphotovideo.com'];
+  const topMerchants = [...merchantCounts.entries()]
+    .sort((a, b) => b[1] - a[1])
+    .map(([m]) => m)
+    .filter(m => MAJOR_MERCHANTS.includes(m) || merchantCounts.get(m)! >= 2)
+    .slice(0, 6);
+
   const homepagePayload = {
     generated_at: nowIso,
     date: today,
@@ -232,6 +271,8 @@ async function main() {
     category_counts: Object.fromEntries(
       [...categoryBuckets.entries()].map(([cat, items]) => [cat, items.length])
     ),
+    top_brands: topBrands,
+    top_merchants: topMerchants,
   };
 
   const outPath = join(dataDir, 'homepage.json');

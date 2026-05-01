@@ -33,7 +33,15 @@ function formatVerifiedTime(iso?: string): string | null {
   return new Date(iso).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' });
 }
 
-export default function DealCard({ deal, displayRank, isWatching }: { deal: DealItem; displayRank?: number; isWatching?: boolean }) {
+export default function DealCard({
+  deal,
+  displayRank,
+  isWatching,
+}: {
+  deal: DealItem;
+  displayRank?: number;
+  isWatching?: boolean;
+}) {
   const rank = displayRank ?? deal.rank;
   const catColor = CATEGORY_COLORS[deal.category] ?? CATEGORY_COLORS.Other;
   const hasDiscount = deal.discount_pct > 0;
@@ -63,18 +71,23 @@ export default function DealCard({ deal, displayRank, isWatching }: { deal: Deal
         {/* Main content */}
         <div className="flex-1 min-w-0">
 
-          {/* Meta row: category + source + verified time */}
+          {/* Meta row: category + brand tier + source + verified time */}
           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
             <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${catColor}`}>
               {deal.category}
             </span>
+            {deal.brand_tier === 'S' && (
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded border border-orange-200 bg-orange-50 text-orange-600 uppercase tracking-wide">
+                主流品牌
+              </span>
+            )}
             <span className="text-xs text-gray-400">{displayDomain}</span>
             {verifiedTime && (
-              <span className="text-xs text-gray-300">· 验证 {verifiedTime}</span>
+              <span className="text-xs text-gray-300">· {verifiedTime}</span>
             )}
           </div>
 
-          {/* Title — max 2 lines */}
+          {/* Title */}
           <h3 className="text-sm font-medium text-gray-800 leading-snug line-clamp-2 mb-2.5">
             {deal.title}
           </h3>
@@ -126,10 +139,10 @@ export default function DealCard({ deal, displayRank, isWatching }: { deal: Deal
               </span>
             )}
 
-            {/* Score — tooltip explains the formula */}
+            {/* Score bar */}
             <div
               className="ml-auto flex items-center gap-1.5"
-              title={`综合分 ${scorePct} = 折扣力度 × 可信度 × 数据新鲜度`}
+              title={`综合分 ${scorePct} = 折扣力度 × 品牌 × 品类 × 可信度`}
             >
               <div className="w-12 h-1.5 bg-gray-200 rounded-full overflow-hidden">
                 <div className={`h-full rounded-full ${scoreColor}`} style={{ width: `${scorePct}%` }} />
@@ -140,7 +153,7 @@ export default function DealCard({ deal, displayRank, isWatching }: { deal: Deal
 
         </div>
 
-        {/* Discount badge / 价格持平 */}
+        {/* Discount badge */}
         <div className="flex-shrink-0 pt-0.5 text-center min-w-[52px]">
           {hasDiscount ? (
             <div className="bg-orange-500 text-white text-sm font-bold rounded-lg px-2 py-1.5 leading-none">
